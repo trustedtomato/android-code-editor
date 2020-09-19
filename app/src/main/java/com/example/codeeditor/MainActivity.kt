@@ -14,46 +14,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        val textEditor = findViewById<EditText>(R.id.text)
+        val textEditor = findViewById<EditText>(R.id.text_editor)
 
-        // Auto-indent
         textEditor.doOnTextChanged { text, start, _, count ->
-            if (text == null) return@doOnTextChanged
-
-            val insertedText = text
-                .slice(start until start+count)
-                .toString()
-
-            insertedText.withIndex().find {
-                it.value == '\n'
-            }?.run {
-                val insertedLineBreakIndex = this.index + start
-
-                // If the inserted linebreak is already indented, leave it as it is.
-                if (text.length > insertedLineBreakIndex + 1 && "\t ".contains(text[insertedLineBreakIndex + 1])) return@run
-
-                val previousLineBreakIndex = text
-                    .withIndex()
-                    .take(insertedLineBreakIndex)
-                    .reversed()
-                    .find {
-                        it.value == '\n'
-                    }?.index ?: -1
-
-                // Get the spaces from the previous line.
-                val spaces = text.drop(previousLineBreakIndex + 1).takeWhile {
-                    "\t ".contains(it)
-                }.toString()
-
-                if (spaces.isEmpty()) return@run
-
-                val newText =
-                    text.take(insertedLineBreakIndex+1).toString() +
-                    spaces +
-                    text.drop(insertedLineBreakIndex+1)
-
-                textEditor.setText(newText)
-                textEditor.setSelection(insertedLineBreakIndex+1+spaces.length)
+            autoIndent(text, start, count)?.let { newEditTextState ->
+                textEditor.setText(newEditTextState.text)
+                textEditor.setSelection(newEditTextState.cursorPosition)
             }
         }
     }
