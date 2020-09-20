@@ -1,25 +1,34 @@
 package com.example.codeeditor
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import androidx.annotation.RequiresApi
 import androidx.core.widget.doOnTextChanged
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : RequesterActivity() {
+
+    var textEditor: EditText? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.toolbar))
 
-        val textEditor = findViewById<EditText>(R.id.text_editor)
+        textEditor = findViewById(R.id.text_editor)
 
-        textEditor.doOnTextChanged { text, start, _, count ->
+        textEditor!!.doOnTextChanged { text, start, _, count ->
             autoIndent(text, start, count)?.let { newEditTextState ->
-                textEditor.setText(newEditTextState.text)
-                textEditor.setSelection(newEditTextState.cursorPosition)
+                textEditor!!.setText(newEditTextState.text)
+                textEditor!!.setSelection(newEditTextState.cursorPosition)
             }
         }
     }
@@ -35,6 +44,34 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
+            R.id.action_open_file -> {
+                requestPermissions(arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )) { results ->
+                    val granted = results.all { (_, granted) ->
+                        granted
+                    }
+                    if (!granted) return@requestPermissions
+                    requestIntent(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        type = "*/*"
+                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/*", "application/*"))
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                    }) { (resultCode, data) ->
+                        if (resultCode != Activity.RESULT_OK || data?.data == null) return@requestIntent
+
+                        val textFileUri = data.data!!
+                        contentResolver.takePersistableUriPermission(textFileUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+
+                        val text = readTextFromUri(this, textFileUri)
+                        textEditor!!.setText(text)
+                    }
+                }
+                true
+            }
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
