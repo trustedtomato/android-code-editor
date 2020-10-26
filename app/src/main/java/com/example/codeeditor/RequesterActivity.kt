@@ -8,7 +8,7 @@ import androidx.core.app.ActivityCompat
 typealias PermissionCallback = (List<Pair<String, Boolean>>) -> Unit
 typealias IntentCallback = (Pair<Int, Intent?>) -> Unit
 
-open class RequesterActivity() : AppCompatActivity() {
+open class RequesterActivity : AppCompatActivity() {
     private val permissionRequests: MutableMap<Int, PermissionCallback> = mutableMapOf()
     private var lastPermissionRequestCode = -1
 

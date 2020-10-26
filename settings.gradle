@@ -1,2 +1,2 @@
 include ':app'
-rootProject.name = "Code Editor"
+rootProject.name = "Text Editor"
