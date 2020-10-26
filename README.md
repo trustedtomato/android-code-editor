@@ -1,2 +1,2 @@
-# Android Code Editor
-A very basic code editor for Android.
+# Android Text Editor
+A very basic text editor for Android.
